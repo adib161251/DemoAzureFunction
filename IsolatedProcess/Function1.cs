@@ -111,6 +111,7 @@ namespace IsolatedProcess
 
                 var db = new MongoDBCRUD("AddressBook");
 
+                requestData.InsertionDate = DateTime.Now;
                 db.InsertRecord<PersonModel>("Users", requestData);
                 return await request.Ok(requestData);
             }
@@ -145,6 +146,93 @@ namespace IsolatedProcess
                     return await request.Ok<PersonModel>(responseData);
                 }
 
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message.ToString());
+                return await request.ServerError(ex.Message.ToString());
+            }
+        }
+
+
+        [Function("UpsertRecordFunction")]
+        [Obsolete]
+        public async Task<HttpResponseData> UpsertRecordFunction([HttpTrigger(AuthorizationLevel.Function, "post", Route ="UpsertUserInfo")] HttpRequestData request)
+        {
+            _logger.LogInformation("UpsertRecordFunction request is being processed");
+            try
+            {
+                var requestData = await request.ReadFromJsonAsync<PersonModel>();
+                if(requestData == null)
+                {
+                    _logger.LogError("Please provide  valid request Data");
+                    return await request.BadRequest("Please provide  valid request Data");
+                }
+
+                using(var db = new MongoDBCRUD("AddressBook"))
+                {
+                    if(requestData.Id != Guid.Empty)
+                    {
+                        requestData.UpdatedOn = DateTime.Now.ToString();
+                        var data = db.UpsertRecord<PersonModel>("Users", requestData.Id, requestData);
+                        var response = new
+                        {
+                            Sucess = "Process was successful",
+                            Data = data
+                        };
+
+                        return await request.Ok<dynamic>(response);
+                    }
+                    else
+                    {
+                        requestData.InsertionDate = DateTime.Now; 
+                        db.InsertRecord<PersonModel>("Users",requestData);
+
+                        var response = new
+                        {
+                            Sucess = "Process was successful",
+                            Data = requestData
+                        };
+
+                        return await request.Ok<dynamic>(response);
+                    }
+                    
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message.ToString());
+                return await request.ServerError(ex.Message.ToString());
+            }
+        }
+
+        [Function("DeleteUserDataFunction")]
+        public async Task<HttpResponseData> DeleteUserDataFunction([HttpTrigger(AuthorizationLevel.Function, "post", Route ="DeleteUserData")] HttpRequestData request)
+        {
+            _logger.LogInformation("DeleteUserDataFunction request is being processed");
+
+            try
+            {
+                var requestData = await request.ReadFromJsonAsync<PersonModel>();
+                
+                if(requestData == null)
+                {
+                    _logger.LogError("Please provide  valid request Data");
+                    return await request.BadRequest("Please provide  valid request Data");
+                }
+
+                using(var db = new MongoDBCRUD("AddressBook"))
+                {
+                    var data = db.DeleteRecord<PersonModel>("Users", requestData.Id);
+
+                    var response = new
+                    {
+                        Sucess = "Process was successful",
+                        Data = data
+                    };
+
+                    return await request.Ok<dynamic>(response);
+                }
             }
             catch(Exception ex)
             {

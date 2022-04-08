@@ -14,6 +14,9 @@ namespace IsolatedProcess
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
         public AddressModel PrimaryAddress { get; set; }
+
+        public DateTime InsertionDate { get; set; }
+        public string UpdatedOn { get; set; } = "";
     }
 
     public class AddressModel

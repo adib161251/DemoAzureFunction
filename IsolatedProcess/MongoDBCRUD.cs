@@ -43,6 +43,27 @@ namespace IsolatedProcess
             return collection.Find(filter).ToList().FirstOrDefault();
         }
 
+        [Obsolete]
+        public dynamic UpsertRecord<T>(string tableName, Guid id, T newData)
+        {
+            var collection = db.GetCollection<T>(tableName);
+
+            var filter = Builders<T>.Filter.Eq("Id", id);
+            var result = collection.ReplaceOne( filter , newData , new UpdateOptions() {IsUpsert= true });
+
+            return result;
+        }
+
+
+        public dynamic DeleteRecord<T>(string tablName, Guid id)
+        {
+            var collection = db.GetCollection<T>(tablName);
+
+            var filter = Builders<T>.Filter.Eq("Id", id);
+
+            return collection.DeleteOne(filter);
+        }
+
         public void Dispose()
         {
             //throw new NotImplementedException();
